@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "agentics": {
+      "type": "http",
+      "url": "https://agentics.you/mcp",
+      "placement": "server"
+    }
+  }
+}
