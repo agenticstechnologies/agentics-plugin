@@ -1,0 +1,20 @@
+{
+  "name": "agentics",
+  "owner": {
+    "name": "Agentics Technologies LLC",
+    "email": "hello@agentics.you"
+  },
+  "metadata": {
+    "description": "The Agentics plugin for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "agentics",
+      "source": "./",
+      "description": "Shared memory for your agents, with a receipt for every write. Save and recall memories through the hosted Agentics MCP server.",
+      "version": "1.4.0",
+      "category": "productivity",
+      "homepage": "https://agentics.you/docs/mcp/"
+    }
+  ]
+}

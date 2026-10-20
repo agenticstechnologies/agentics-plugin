@@ -1,0 +1,91 @@
+name: plugin
+
+# Checks the plugin on every push and PR, and weekly against the latest Claude Code CLI.
+#   manifests      every manifest parses, names the hosted MCP server at https://agentics.you/mcp, and carries one
+#                  version (Claude Code plugin + marketplace, Cursor/Grok Bot plugin, CHANGELOG); every skill's
+#                  frontmatter name matches its folder; no TODO left in the README.
+#   install-smoke  `claude plugin validate`, then add this checkout as a marketplace, install agentics@agentics, and
+#                  check the installed plugin lists the five skills and the agentics MCP server.
+# The agentics.you go-live suite reads the latest main run of install-smoke (checklist L7-08).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check manifests, versions and skills
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, readdirSync, existsSync } from "node:fs";
+          const fail = [];
+          const json = (p) => { try { return JSON.parse(readFileSync(p, "utf8")); } catch (e) { fail.push(`${p}: ${e.message}`); return {}; } };
+          const MCP = "https://agentics.you/mcp";
+          const claude = json(".claude-plugin/plugin.json");
+          const market = json(".claude-plugin/marketplace.json");
+          const cursor = json(".cursor-plugin/plugin.json");
+          const mcp = json("mcp.json");
+          if (claude.mcpServers?.agentics?.url !== MCP) fail.push(".claude-plugin/plugin.json: mcpServers.agentics.url is not " + MCP);
+          if (mcp.mcpServers?.agentics?.url !== MCP) fail.push("mcp.json: mcpServers.agentics.url is not " + MCP);
+          const entry = (market.plugins ?? []).find((p) => p.name === "agentics");
+          if (!entry || entry.source !== "./") fail.push("marketplace.json: no agentics plugin with source ./");
+          const versions = { "claude plugin.json": claude.version, "marketplace.json": entry?.version, "cursor plugin.json": cursor.version };
+          if (new Set(Object.values(versions)).size !== 1) fail.push("versions differ: " + JSON.stringify(versions));
+          const changelog = readFileSync("CHANGELOG.md", "utf8");
+          if (!changelog.includes(`## ${claude.version}\n`)) fail.push(`CHANGELOG.md has no "## ${claude.version}" entry`);
+          for (const dir of readdirSync("skills")) {
+            const p = `skills/${dir}/SKILL.md`;
+            if (!existsSync(p)) { fail.push(`${p} is missing`); continue; }
+            const name = readFileSync(p, "utf8").match(/^---\n[\s\S]*?^name:\s*(\S+)/m)?.[1];
+            if (name !== dir) fail.push(`${p}: frontmatter name ${name}, folder ${dir}`);
+          }
+          for (const sk of ["save-memory", "recall-memory"]) if (!existsSync(`skills/${sk}/SKILL.md`)) fail.push(`skills/${sk} is missing`);
+          if (/TODO/.test(readFileSync("README.md", "utf8"))) fail.push("README.md has a TODO");
+          if (fail.length) { for (const f of fail) console.log(`::error::${f}`); process.exit(1); }
+          console.log(`ok: version ${claude.version}, ${readdirSync("skills").length} skills, MCP ${MCP}`);
+          JS
+
+  install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code && claude --version
+      - name: Validate, install from this checkout, and inspect
+        env:
+          CLAUDE_CONFIG_DIR: ${{ runner.temp }}/claude
+        run: |
+          mkdir -p "$CLAUDE_CONFIG_DIR"
+          claude plugin validate .
+          claude plugin validate .claude-plugin/plugin.json
+          claude plugin marketplace add ./
+          claude plugin install agentics@agentics
+          claude plugin details agentics@agentics | tee details.txt
+          grep -q 'Skills (5)' details.txt
+          for s in save-memory recall-memory show-receipts log-what-my-agent-did approve-pending; do
+            grep -q "$s" details.txt || { echo "::error::installed plugin has no $s skill"; exit 1; }
+          done
+          grep -Eq 'MCP servers \(1\) +agentics' details.txt || { echo "::error::installed plugin has no agentics MCP server"; exit 1; }
+          if grep -qi 'bond' details.txt; then echo "::error::the installed plugin mentions Bond (D-29: Bond stays off)"; exit 1; fi

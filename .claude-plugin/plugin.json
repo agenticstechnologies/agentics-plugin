@@ -1,0 +1,20 @@
+{
+  "name": "agentics",
+  "version": "1.4.0",
+  "description": "Shared memory for your agents, with a receipt for every write. Save and recall memories through the hosted Agentics MCP server.",
+  "author": {
+    "name": "Agentics Technologies LLC",
+    "email": "hello@agentics.you",
+    "url": "https://agentics.you"
+  },
+  "homepage": "https://agentics.you/docs/mcp/",
+  "repository": "https://github.com/agenticstechnologies/agentics-plugin",
+  "license": "MIT",
+  "keywords": ["agentics", "memory", "mcp", "receipts", "approvals"],
+  "mcpServers": {
+    "agentics": {
+      "type": "http",
+      "url": "https://agentics.you/mcp"
+    }
+  }
+}
