@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- Claude Code: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, so this repository installs with `claude plugin marketplace add agenticstechnologies/agentics-plugin` and `claude plugin install agentics@agentics`.
+- Two memory skills: `save-memory` (calls `remember`) and `recall-memory` (calls `recall`, or `get_context` for a deeper search).
+- The README leads with shared memory, lists the memory and hub tools and the current scopes, and explains agent keys (`AGENTICS_AGENT_KEY`) versus the console key.
+- CI: `plugin.yml` checks the manifests agree and installs the plugin with the Claude Code CLI (install smoke).
+
 ## 1.3.0
 
 First public release.
