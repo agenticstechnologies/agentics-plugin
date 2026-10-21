@@ -10,6 +10,7 @@
   "homepage": "https://agentics.you/docs/mcp/",
   "repository": "https://github.com/agenticstechnologies/agentics-plugin",
   "license": "MIT",
+  "privacyPolicyUrl": "https://agentics.you/privacy",
   "keywords": ["agentics", "memory", "mcp", "receipts", "approvals"],
   "mcpServers": {
     "agentics": {
