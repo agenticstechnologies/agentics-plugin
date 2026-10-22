@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.1
+
+- The README lists all 26 tools a sign-in connection gets from `https://agentics.you/mcp`, matching the live `tools/list`: memory, receipts and actions, owner and limits, handoffs, and subscriptions. It adds `record_action_batch`, `get_agent_history`, `update_memory`, `forget_memory`, `subscribe`, `unsubscribe`, and `list_subscriptions`, and says an agent key lists 20 (no handoff tools).
+- Each tool is marked Read, Write, or Destructive as the server annotates it. `my_rules` and `unsubscribe` are Destructive.
+- Replaces "None of these tools moves money or deletes data" with what forget, update, and unsubscribe actually do.
+- No change to the MCP server entry, skills, or sign-in.
+
 ## 1.4.0
 
 - Claude Code: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, so this repository installs with `claude plugin marketplace add agenticstechnologies/agentics-plugin` and `claude plugin install agentics@agentics`.
