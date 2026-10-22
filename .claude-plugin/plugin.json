@@ -1,6 +1,6 @@
 {
   "name": "agentics",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Shared memory for your agents, with a receipt for every write. Save and recall memories through the hosted Agentics MCP server.",
   "author": {
     "name": "Agentics Technologies LLC",

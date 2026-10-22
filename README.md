@@ -58,26 +58,62 @@ The plugin has no hooks, scripts, or local code. It is an MCP server entry plus 
 
 ## Tools
 
-The hosted server is the source of truth for tool names and schemas: `tools/list` shows what your connection has. The full reference is at https://agentics.you/docs/mcp/tools/.
+A connection made through sign-in lists 26 tools. A connection made with an agent key lists 20: the key does not carry the `hub:tasks` scope, so the six handoff tools are not listed. The hosted server is the source of truth for tool names and schemas: `tools/list` shows what your connection has. The full reference is at https://agentics.you/docs/mcp/tools/.
+
+**Read** tools are marked read-only by the server. **Write** tools add or change something in Agentics. **Destructive** tools are marked `destructiveHint: true` by the server, so clients ask before running them.
+
+### Memory
 
 | Tool | Type | What it does |
 | --- | --- | --- |
-| `remember` | Write | Saves a memory, with a receipt |
-| `recall` | Read | Finds memories for a query |
-| `get_context` | Read | Deeper recall that can follow causes and effects |
-| `find_related` | Read | Memories linked to a receipt |
-| `record_outcome` | Write | Adds what really happened to a memory |
-| `receipts` | Read | Lists up to 25 of this agent's receipts, each with a Check it yourself link |
-| `my_activity` | Read | This agent's recent actions, filterable by decision, action type, and time (up to 50) |
-| `my_record` | Read | This agent's record and the receipts behind it |
-| `my_rules` | Write | Reads your rules, and can Pause all. Only you can resume |
-| `ask_owner` | Write | Asks you a question. It shows up under **Needs you** |
-| `log_action` | Write | Records an action. Send, delete, sign, publish, and share wait for you unless a rule you set allows them |
-| `record_action` | Write | Records something the agent already did. The receipt is marked self-reported, because Agentics did not see it happen |
-| `report_outcome` | Write | Adds a result and a dollar impact to an existing receipt, as a new linked receipt |
-| `whoami`, `list_peers`, `send_task`, `inbox`, `submit_result`, `get_result` | Read and write | Hand work between your connected agents (signed-in connections) |
+| `remember` | Write | Saves something worth knowing later as a memory your agents can recall, with a receipt that proves when it was saved |
+| `recall` | Read | Searches your memories and returns the best matches, each with a score and a link to check it |
+| `get_context` | Read | Returns what your agents already know about a query, with reasoning, outcome, and a link to check each |
+| `find_related` | Read | Finds memories connected to one memory: causes and effects, the same task, shared entities or tags |
+| `get_agent_history` | Read | Lists what one agent recorded, newest first. Defaults to this agent |
+| `update_memory` | Write | Corrects a memory. Saves the correction as a new memory, marks the old one replaced, and writes a signed receipt of the change |
+| `forget_memory` | Write | Makes one memory forgotten, so `recall` and `get_context` stop returning it. A signed receipt records the forget. Pause all and approval rules apply |
+| `record_outcome` | Write | Records what really happened to one memory, as a new outcome receipt. The original receipt is unchanged |
 
-None of these tools moves money or deletes data.
+### Receipts and actions
+
+| Tool | Type | What it does |
+| --- | --- | --- |
+| `log_action` | Write | Call before an action. Writes a receipt and returns allow, deny, or needs_you. Send, delete, sign, publish, and share wait for you unless a rule you set allows them |
+| `record_action` | Write | Records an action the agent already took, with optional reasoning and lessons. The receipt is marked self-reported, because Agentics did not see it happen |
+| `record_action_batch` | Write | Records up to 50 actions in one request. Each succeeds or fails on its own |
+| `report_outcome` | Write | Adds success or failure, and an optional dollar impact, to one receipt, as a new linked receipt |
+| `receipts` | Read | Lists this agent's newest receipts with verdicts, dollars, and Check it yourself links |
+| `my_activity` | Read | Lists this agent's recorded actions, newest first, filterable by decision, action type, provenance, and time |
+| `my_record` | Read | Reads this agent's record and its ten newest receipts |
+
+### Owner and limits
+
+| Tool | Type | What it does |
+| --- | --- | --- |
+| `ask_owner` | Write | Asks you a question. It shows up under **Needs you** and returns only that the agent is waiting |
+| `my_rules` | Destructive | Reads your rules for this agent. Called with `pause`, it pauses every agent (Pause all). Only you can resume |
+
+### Handoffs between your agents (sign-in connections)
+
+| Tool | Type | What it does |
+| --- | --- | --- |
+| `whoami` | Read | Shows which agent, harness, and owner this connection belongs to |
+| `list_peers` | Read | Lists your other agents and whether this one may send them work |
+| `send_task` | Write | Hands work to one connected agent, or up to ten |
+| `inbox` | Write | Lists work waiting for this agent, and takes a task when the agent is ready to do it |
+| `submit_result` | Write | Finishes a task the agent took, with a short summary and links |
+| `get_result` | Write | Reads status, lineage, and spend for a task the agent sent or was given, and can reject a result |
+
+### Subscriptions
+
+| Tool | Type | What it does |
+| --- | --- | --- |
+| `subscribe` | Write | Sends matching new memories to an https webhook. Up to 50 per agent |
+| `unsubscribe` | Destructive | Stops one subscription by its id |
+| `list_subscriptions` | Read | Lists this agent's subscriptions and when each last matched |
+
+None of these tools moves money. No tool deletes a receipt: `forget_memory` stops a memory coming back from recall, `update_memory` keeps the old text as history, and `unsubscribe` stops a webhook.
 
 ## Skills
 
